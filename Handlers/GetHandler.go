@@ -30,8 +30,9 @@ func GetAccount(context *gin.Context){
 		log.Panic("mysql db connect faild --- " + err.Error())
 	}
 	var accounts =Models.Account{}
-	db.Where(Models.Account{Status:0}).First(&accounts).Scan(&accounts)
-	accounts.Status = 2
+	db.Where(Models.Account{Status:0}).Order("num").First(&accounts).Scan(&accounts)
+	db.Model(&accounts).Update("status", 2)
+	//accounts.Status = 2
 	db.Save(&accounts)
 	//fmt.Println(accounts.Password)
 	//os.Exit(1)
@@ -55,7 +56,7 @@ func GetDevice(context *gin.Context){
 	fmt.Print(machine)
 	ptype,ok :=context.GetQuery("ptype")
 	if !ok {
-		context.JSON(203,gin.H{
+		context.JSON(http.StatusSeeOther,gin.H{
 			"code":203,
 			"message": "type is required",
 		})
@@ -67,14 +68,22 @@ func GetDevice(context *gin.Context){
 	if err != nil {
 		log.Panic("mysql db connect faild --- " + err.Error())
 	}
+	//db.Raw("SELECT name, age FROM users WHERE name = ?", 3).Scan(&result)
 	var devices =Models.Device{}
-	db.Where(Models.Device{Status:0,Type:ptype}).First(&devices).Scan(&devices)
-	err :=db.Where(Models.Device{Status:0,Type:ptype}).First(&devices).Error
-	if err !=nil{
-		log.Panic("mysql db connect faild --- " + err.Error())
+	db.Where(Models.Device{Status:0,Type:ptype}).Order("num").First(&devices).Scan(&devices)
+	if len(devices.Sn)<1{
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message": "没有合适的设备码可用",
+		})
+		return
 	}
-	devices.Status = 2
-	db.Save(&devices)
+	//fmt.Print(devices)
+	//os.Exit(1)
+	db.Model(&devices).Update("status", 2)
+	//devices.Status = 2
+	db.Save(devices)
+	//db.Save(&devices)
 	context.JSON(http.StatusOK,gin.H{
 		"code":200,
 		"Udid" :devices.Udid,

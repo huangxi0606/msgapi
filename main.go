@@ -18,6 +18,8 @@ func main(){
 	r.GET("/v1/msg_task/get_account",GetAccount)
 	r.GET("/v1/msg_task/get_device",GetDevice)
 	r.GET("/v1/msg_task/get_msgtask",GetMsgTask)
+	r.GET("/v1/msg_task/reply_msgtask",ReplyMsgTask)
+	r.GET("/v1/msg_task/get_hhx",Get_hhx)
 	r.Run(":9009")
 }
 
