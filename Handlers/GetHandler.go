@@ -68,12 +68,13 @@ func GetDevice(context *gin.Context){
 		log.Panic("mysql db connect faild --- " + err.Error())
 	}
 	var devices =Models.Device{}
-	device :=db.Where(Models.Device{Status:0,Type:ptype}).First(&devices)
-	device.Scan(&devices)
-	fmt.Println(device)
+	db.Where(Models.Device{Status:0,Type:ptype}).First(&devices).Scan(&devices)
+	err :=db.Where(Models.Device{Status:0,Type:ptype}).First(&devices).Error
+	if err !=nil{
+		log.Panic("mysql db connect faild --- " + err.Error())
+	}
 	devices.Status = 2
 	db.Save(&devices)
-	//os.Exit(1)
 	context.JSON(http.StatusOK,gin.H{
 		"code":200,
 		"Udid" :devices.Udid,

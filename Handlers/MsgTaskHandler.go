@@ -91,16 +91,13 @@ func GetMsgTask(context *gin.Context){
 		})
 		return
 	}
-	//MsgKeys, err := redis.Strings(c.Do("KEYS", "dispatch:msgTask:*"))
-	//msgTasksKeys, err := redis.Strings(c.Do("KEYS", "dispatch:msgTask:*"))
 	max_addressee, _ := redis.Int(c.Do("HGET", "config:config:max_addressee", "value"))
 	fmt.Print(max_addressee)
 	//找出可用的账号
 	MsgKeys, err := redis.Strings(c.Do("KEYS", "dispatch:msgTask:*"))
 	if err != nil {
-		log.Panic("get ad task key faild --- " + err.Error())
+		log.Panic("get msg task key faild --- " + err.Error())
 	}
-	//accountKeys, _ := redis.Strings(c.Do("KEYS", "dispatch:msgTask:*"))
 	perms := rand.Perm(len(MsgKeys)) //打乱账号顺序
 	var msgs []map[string]string
 	fmt.Print(msgs)

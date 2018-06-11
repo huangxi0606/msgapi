@@ -18,7 +18,6 @@ func main(){
 	r.GET("/v1/msg_task/get_account",GetAccount)
 	r.GET("/v1/msg_task/get_device",GetDevice)
 	r.GET("/v1/msg_task/get_msgtask",GetMsgTask)
-	r.GET("/test",Test)
 	r.Run(":9009")
 }
 
