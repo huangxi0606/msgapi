@@ -33,7 +33,15 @@ func GetAccount(context *gin.Context){
 	db.Where(Models.Account{Status:0}).Order("num").First(&accounts).Scan(&accounts)
 	db.Model(&accounts).Update("status", 2)
 	//accounts.Status = 2
-	db.Save(&accounts)
+	if err := db.Save(&accounts).Error; err != nil {
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":"Got errors when save accounts",
+		})
+		return
+	}
+
+	//db.Save(&accounts)
 	//fmt.Println(accounts.Password)
 	//os.Exit(1)
 	context.JSON(http.StatusOK,gin.H{
@@ -82,7 +90,15 @@ func GetDevice(context *gin.Context){
 	//os.Exit(1)
 	db.Model(&devices).Update("status", 2)
 	//devices.Status = 2
-	db.Save(devices)
+	if err := db.Save(&devices).Error; err != nil {
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":"Got errors when save devices",
+		})
+		return
+	}
+
+	//db.Save(devices)
 	//db.Save(&devices)
 	context.JSON(http.StatusOK,gin.H{
 		"code":200,

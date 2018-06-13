@@ -14,9 +14,12 @@ type Hht struct{
 	Two       string    `json:"two"`
 	Three       string    `json:"three"`
 }
+
 func (Hht) TableName() string {
 	return "hht"
 }
+
+
 func Get_hhx(context *gin.Context){
 	db, err := gorm.Open("mysql", Config.MSQ)
 	defer db.Close()
@@ -51,7 +54,4 @@ func Get_hhx(context *gin.Context){
 	//return
 	//4.更改某一列
 	//db.Model(&hht).Update("three", "love")
-
-
-
 }
