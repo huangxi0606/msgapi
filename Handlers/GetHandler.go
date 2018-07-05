@@ -10,7 +10,6 @@ import (
 	"MsgApi/Models"
 	"net/http"
 )
-
 func GetAccount(context *gin.Context){
 
 	machine,ok :=context.GetQuery("machine")

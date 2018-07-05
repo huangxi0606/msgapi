@@ -21,7 +21,9 @@ func main(){
 	r.GET("/v1/msg_task/reply_msgtask",ReplyMsgTask)
 	r.GET("/v1/msg_task/get_hhx",Get_hhx)
 	r.GET("/v1/msg_task/get_relation",Get_Relation)
+	r.GET("/v1/msg_task/new",GetNewAccount)
 	r.GET("/v1/msg_task/test",Test)
+	r.GET("/v1/msg_task/get_newaccount",GetNewAccount)
 	r.Run(":9009")
 }
 
