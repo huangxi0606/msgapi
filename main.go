@@ -24,6 +24,10 @@ func main(){
 	r.GET("/v1/msg_task/new",GetNewAccount)
 	r.GET("/v1/msg_task/test",Test)
 	r.GET("/v1/msg_task/get_newaccount",GetNewAccount)
+	r.POST("/v1/msg_task/reply_newaccount",ReplyNewAccount)
+	r.GET("/v1/msg_task/get_newdevice",GetNewDevice)
+	r.POST("/v1/msg_task/reply_newdevice",ReplyNewDevice)
+	r.GET("/v1/msg_task/get_newmsgtask",GetNewMsgTask)
 	r.Run(":9009")
 }
 

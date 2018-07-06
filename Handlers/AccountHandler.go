@@ -78,6 +78,68 @@ func GetNewAccount(context *gin.Context){
 }
 
 func ReplyNewAccount(context *gin.Context){
+	//链接redis
+	c, err := redis.Dial("tcp", Config.REDIS_SERVER,redis.DialDatabase(Config.REDIS_DB))
+	defer c.Close()
+	if err != nil {
+		log.Panic("connect redis server faild --- " + err.Error())
+
+	}
+	status,ok :=context.GetQuery("status")
+	if !ok {
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":"status is required",
+		})
+		return
+	}
+	fmt.Print(status)
+
+	cert,ok :=context.GetQuery("cert")
+	if !ok {
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":"cert is required",
+		})
+		return
+	}
+	fmt.Print(cert)
+	email,ok :=context.GetQuery("email")
+	if !ok {
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":"email is required",
+		})
+		return
+	}
+	fmt.Print(email)
+
+	v, err := redis.Values(c.Do("HGETALL", "msg:account:"+email))
+	if err != nil {
+		panic(err)
+	}
+	if err := redis.ScanStruct(v, &p2); err != nil {
+		panic(err)
+	}
+
+	c.Do("HSET", "msg:account:"+email, "cert", cert)
+	c.Do("HSET", "msg:account:"+email, "status", status)
+	c.Do("HSET", "msg:account:"+email, "updated_at", time.Now().Format("2006-01-02 15:04:05"))
+	rec,ok :=context.GetQuery("rec")
+	if ok {
+		c.Do("HSET", "msg:account:"+email, "Record_at", time.Now())
+	}
+	fmt.Print(rec)
+
+	_, err = c.Do("rpush", "account:list:"+status, email)
+	if err != nil {
+		fmt.Println("redis set failed:", err)
+	}
+	context.JSON(http.StatusOK,gin.H{
+		"code":200,
+		"message" :"回执成功",
+
+	})
 
 }
 
