@@ -14,6 +14,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"strconv"
 	"time"
+
 )
 
 //var count int
@@ -97,16 +98,11 @@ import (
 			max_device_num, _ := strconv.Atoi(msg["max_device_num"])
 			msgtaskid,_ := strconv.Atoi(msg["id"])
 			max_adress,_ := strconv.Atoi(msg["max_adress"])
-			var max_addressee int
+
+
 			if max_adress ==0{
-				max_addressee,_ := redis.Int(c.Do("HGET", "config:max_addressee", "value"))
-				fmt.Print(max_addressee)
-
-			}else {
-				max_addressee := msg["max_adress"]
-				fmt.Print(max_addressee)
+				max_adress,_= redis.Int(c.Do("HGET", "config:max_addressee", "value"))
 			}
-
 			//检查账号状态
 			if msg_status != 1 || msg_enable != 1 {
 				continue
@@ -124,45 +120,43 @@ import (
 					continue
 				}
 			}
-			fmt.Print(max_addressee)
-			if current_num + max_addressee >target_num{
-				max_addressee =target_num-current_num
+			fmt.Print(max_adress)
+			if current_num + max_adress >target_num{
+				max_adress =target_num-current_num
 			}
+
 			var yy [] string
-			file_column,ok :=msg["file_column"]
-			if ok {
+			//file_column,_ :=msg["file_column"]
+			file_column,_ := msg["file_column"]
+
+
+			if len(file_column) >0 {
 				//有txt
 				fmt.Print(file_column)
-				address_key :="msg:txt:"+msg["id"]
-				fmt.Print(address_key)
 				len, _ := redis.Int(c.Do("llen", "msg:txt:" +msg["id"]))
 				if len<1{
 					continue
 				}
-				context.JSON(http.StatusSeeOther,gin.H{
-					"code":203,
-					"message":max_addressee,
 
-				})
-				return
-				if len <max_addressee{
-					max_addressee =len
+				if len <max_adress{
+					max_adress =len
 				}
-				var addressee = make([]string,max_addressee)
-				for a := 0; a < max_addressee; a++ {
+
+				address_key :="msg:txt:"+msg["id"]
+				fmt.Print(address_key)
+				var addressee = make([]string,0,max_adress)
+				for a := 0; a < max_adress; a++ {
 					hh, _ := redis.String(c.Do("lpop", address_key))
 					addressee = append(addressee,hh)
 				}
 				yy =addressee
-				context.JSON(http.StatusSeeOther,gin.H{
-					"code":203,
-					"message":addressee,
-					"yy":yy,
-				})
-				return
-
-			}else{
+			} else{
 				activeMsgKey := "msg:app-enable-account:" + msg["id"]
+				//context.JSON(http.StatusSeeOther,gin.H{
+				//	"code":789,
+				//	"message":activeMsgKey,
+				//})
+				//return
 				isActive, _ := redis.Bool(c.Do("EXISTS", activeMsgKey))
 				if isActive == false {
 					continue
@@ -171,13 +165,13 @@ import (
 				if len(hh)<1{
 					continue
 				}
-				if current_num + max_addressee >target_num{
-					max_addressee =target_num-current_num
+				if current_num + max_adress >target_num{
+					max_adress =target_num-current_num
 				}
-				if len(hh)<max_addressee{
-					max_addressee =len(hh)
+				if len(hh)<max_adress{
+					max_adress =len(hh)
 				}
-				addressee := hh[:max_addressee]
+				addressee := hh[:max_adress]
 				for _,val :=range addressee{
 					c.Do("SREM",activeMsgKey,val)
 				}
@@ -194,7 +188,7 @@ import (
 				"msg_content":msg["content"],
 				"msg_urls":msg["urls"],
 				"msg_link":msg["link"],
-				"num":max_addressee,
+				"num":max_adress,
 				"addressee": yy,
 			})
 			if msgtaskid >0{
@@ -229,22 +223,22 @@ import (
 			return
 		}
 		fmt.Print(email)
-		sn,ok :=context.GetQuery("sn")
+		sn,ok :=context.GetQuery("serial")
 		if !ok {
 			context.JSON(http.StatusSeeOther,gin.H{
 				"code":203,
-				"message":"sn is required",
+				"message":"serial is required",
 			})
 			return
 		}
 		fmt.Print(sn)
 		msg_task_id,ok :=context.GetQuery("msg_task_id")
 		if !ok {
-			//context.JSON(http.StatusSeeOther,gin.H{
-			//	"code":203,
-			//	"message":"msg_task_id is required",
-			//})
-			//return
+			context.JSON(http.StatusSeeOther,gin.H{
+				"code":203,
+				"message":"msg_task_id is required",
+			})
+			return
 		}
 		fmt.Print(msg_task_id)
 		status,ok :=context.GetQuery("status")
@@ -257,22 +251,30 @@ import (
 		}
 		addressee,ok :=context.GetQuery("addressee")
 		if !ok {
+			context.JSON(http.StatusSeeOther,gin.H{
+				"code":203,
+				"message":"addressee is required",
+			})
+			return
+		}
 
+		msg_device_name,ok :=context.GetQuery("msg_device_name")
+		if !ok {
+			context.JSON(http.StatusSeeOther,gin.H{
+				"code":203,
+				"message":"msg_device_name is required",
+			})
+			return
 		}
 		device_version,ok :=context.GetQuery("device_version")
 		if !ok {
-
+			context.JSON(http.StatusSeeOther,gin.H{
+				"code":203,
+				"message":"device_version is required",
+			})
+			return
 		}
 		fmt.Print(device_version)
-		log,ok :=context.GetQuery("log")
-		if !ok {
-			//context.JSON(http.StatusSeeOther,gin.H{
-			//	"code":203,
-			//	"message":"status is required",
-			//})
-			//return
-		}
-		fmt.Print(log)
 		//链接redis
 		c, err := redis.Dial("tcp", Config.REDIS_SERVER,redis.DialDatabase(Config.REDIS_DB))
 		defer c.Close()
@@ -283,66 +285,52 @@ import (
 		Status, _ := strconv.Atoi(status)
 		if Status ==0{
 				task_key := "dispatch:msgTask:" + msg_task_id
-				//msg, _ := redis.StringMap(c.Do("HGETALL", task_key))
-				//current_num, _ := strconv.Atoi(msg["current_num"])
 			c.Do("HINCRBY", task_key, "current_num", 1)
 		}
-		//if status == "0"{
-		//	current_num =current_num+1;
-		//
-		//}
-		//fmt.Print(status)
 		deviceKey := "msg:device:" + machine
 		c.Do("INCRBY", deviceKey, 1)
+		//设备和账号加1
+		device := "machine:device:" + sn
+		v, err := redis.Values(c.Do("HGETALL", device))
+		if err != nil {
+			panic(err)
+		}
+		if err := redis.ScanStruct(v, &p3); err != nil {
+			panic(err)
+		}
+		c.Do("HSET", device, "num", p3.Num +1)
+
+		account := "machine:device:" + email
+		w, err := redis.Values(c.Do("HGETALL", account))
+		if err != nil {
+			panic(err)
+		}
+		if err := redis.ScanStruct(w, &p2); err != nil {
+			panic(err)
+		}
+		c.Do("HSET", account, "num", p2.Num +1)
 		db, err := gorm.Open("mysql", Config.MSQ)
 		defer db.Close()
 		if err != nil {
 			panic("mysql db connect faild --- " + err.Error())
 		}
-		accounts:=Models.Account{}
-		account :=db.Where(Models.Account{Email:email}).First(&accounts)
-		account.Scan(&accounts)
-		//fmt.Print(accounts.Status)
-		//os.Exit(1)
-		devices :=Models.Device{}
-		db.Where(Models.Device{Sn:sn}).First(&devices).Scan(&devices)
-		now :=time.Now().Format("2006-01-02 15:04:05") // 这是个奇葩,必须是这个时间点, 据说是go诞生之日, 记忆方法:6-1-2-3-4-5
-		//# 2014-01-07 09:42:20
-		fmt.Print(now)
-		if Status >0{
-			if Status ==1{
-				devices.Status= 1
-				//devices.failed_at
-			}else{
-				accounts.Status=1
-			}
-		}
-		devices.Num += 1
-		accounts.Num +=1
-		db.Save(&devices)
-		db.Save(&accounts)
 		if len(addressee) >0{
 			addressees :=Models.Addressee{}
 			db.Where("number",addressee).First(&addressees).Scan(&addressees)
 			addressees.Num +=1
 			db.Save(&addressees)
 		}
-		//machiness :=Models.Machine{}
-		//machiness.MsgTaskId = msgtaskid
-		//machiness.Machine = machine
-		//db.Save(&machiness)
-		//mschiness =user1 := User{Name: "ScopeUser1", Age: 1}
-		Statusy, _ := strconv.Atoi(status)
-		if Statusy == 0{
-			msglogs :=Models.MsgLog{}
-			msglogs.Addressee =addressee
-			msglogs.Status =status
-			msglogs.Account_email =email
-			msglogs.Deviced_sn =sn
-			msglogs.Msg_task_id =msg_task_id
-			msglogs.Log =log
-			db.Save(&msglogs)
-		}
+
+		log := "msg:log:" + msg_task_id+":"+addressee+":"+status
+		c.Do("HSET", log, "status", status)
+		c.Do("HSET", log, "msg_task_id", msg_task_id)
+		c.Do("HSET", log, "deviced_sn", sn)
+		c.Do("HSET", log, "account_email", email)
+		c.Do("HSET", log, "msg_device_name", msg_device_name)
+		c.Do("HSET", log, "account_email", email)
+		c.Do("HSET", log, "msg_device_name", msg_device_name)
+		c.Do("HSET", log, "addressee", addressee)
+		c.Do("HSET", log, "current_at", time.Now().Format("2006-01-02 15:04:05"))
 		deviceLiveExpire, _ := redis.Int(c.Do("HGET", "config:app_device_active_expire", "value"))
 		if deviceLiveExpire == 0 {
 			deviceLiveExpire = 10
@@ -365,4 +353,34 @@ import (
 			"code":200,
 			"message":"回执成功",
 		})
+	}
+	type Log struct {
+		Email     string `form:"email" json:"email" binding:"required"`
+		Serial string `form:"serial" json:"serial" binding:"required"`
+		Machine string `form:"machine" json:"machine" binding:"required"`
+		Taskid string `form:"task_id" json:"task_id" binding:"required"`
+		Addressee  []string `form:"addressee" json:"addressee" binding:"required"`
+	}
+
+	func GetJson(c *gin.Context){
+		// bind JSON数据
+		var json Log
+		// binding JSON,本质是将request中的Body中的数据按照JSON格式解析到json变量中
+		if c.BindJSON(&json) == nil {
+			hhy :=json.Addressee
+			c.JSON(http.StatusSeeOther,gin.H{
+				"code":203,
+				"message":hhy,
+			})
+			return
+			//if json.User == "TAO" && json.Password == "123" {
+			//	c.JSON(http.StatusOK, gin.H{"JSON=== status": "you are logged in"+json.User})
+			//} else {
+			//	c.JSON(http.StatusUnauthorized, gin.H{"JSON=== status": "unauthorized"})
+			//}
+		} else {
+			c.JSON(404, gin.H{"JSON=== status": "binding JSON error!"})
+		}
+
+
 	}

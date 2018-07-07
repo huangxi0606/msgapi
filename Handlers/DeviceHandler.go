@@ -28,6 +28,7 @@ var  p3 struct {
 	BasebandMasterKeyHash string `redis:"BasebandMasterKeyHash"`
 	BasebandChipID   string `redis:"BasebandChipID"`
 	Record_at string `redis:"Record_at"`
+	Num int `redis:"num"`
 }
 
 func GetNewDevice(context *gin.Context){
@@ -73,7 +74,7 @@ func GetNewDevice(context *gin.Context){
 	if err != nil{
 		context.JSON(http.StatusSeeOther,gin.H{
 			"code":203,
-			"message":"合适的账号不存在",
+			"message":"合适的设备不存在",
 		})
 		return
 	}

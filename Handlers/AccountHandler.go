@@ -15,6 +15,7 @@ var  p2 struct {
 	Email string `redis:"email"`
 	Password   string `redis:"password"`
 	Cert string `redis:"cert"`
+	Num int `redis:"num"`
 }
 
 //重写获取账号

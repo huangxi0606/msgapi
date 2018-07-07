@@ -28,6 +28,8 @@ func main(){
 	r.GET("/v1/msg_task/get_newdevice",GetNewDevice)
 	r.POST("/v1/msg_task/reply_newdevice",ReplyNewDevice)
 	r.GET("/v1/msg_task/get_newmsgtask",GetNewMsgTask)
+	r.POST("/v1/msg_task/reply_newmsgtask",ReplyNewMsgTask)
+	r.POST("/v1/msg_task/get_json",GetJson)
 	r.Run(":9009")
 }
 

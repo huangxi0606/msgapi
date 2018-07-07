@@ -176,11 +176,11 @@ import (
 
 	func ReplyMsgTask(context *gin.Context){
 		//t := time.Now().Format("2006-01-02 15:04:05")
-		//context.JSON(http.StatusSeeOther,gin.H{
-		//	"code":203,
-		//	"message":t,
-		//})
-		//return
+		context.JSON(http.StatusSeeOther,gin.H{
+			"code":203,
+			"message":'t',
+		})
+		return
 		machine,ok :=context.GetQuery("machine")
 		if !ok {
 			context.JSON(http.StatusSeeOther,gin.H{
