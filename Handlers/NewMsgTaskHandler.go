@@ -141,7 +141,6 @@ import (
 				if len <max_adress{
 					max_adress =len
 				}
-
 				address_key :="msg:txt:"+msg["id"]
 				fmt.Print(address_key)
 				var addressee = make([]string,0,max_adress)
@@ -196,7 +195,6 @@ import (
 			}
 		}
 	}
-
 
 	func ReplyNewMsgTask(context *gin.Context){
 		//t := time.Now().Format("2006-01-02 15:04:05")
@@ -359,27 +357,90 @@ import (
 		Serial string `form:"serial" json:"serial" binding:"required"`
 		Machine string `form:"machine" json:"machine" binding:"required"`
 		Taskid string `form:"task_id" json:"task_id" binding:"required"`
-		Addressee  []string `form:"addressee" json:"addressee" binding:"required"`
+		//Addt  []map[string]interface{} `form:"addressee" json:"addressee" binding:"required"`
+		Addt  []map[string]string `form:"addressee" json:"addressee" binding:"required"`
 	}
-
-	func GetJson(c *gin.Context){
+	func GetJson(context *gin.Context){
+		c, err := redis.Dial("tcp", Config.REDIS_SERVER,redis.DialDatabase(Config.REDIS_DB))
+		defer c.Close()
+		if err != nil {
+			panic("connect redis server faild -- " + err.Error())
+		}
 		// bind JSON数据
 		var json Log
-		// binding JSON,本质是将request中的Body中的数据按照JSON格式解析到json变量中
-		if c.BindJSON(&json) == nil {
-			hhy :=json.Addressee
-			c.JSON(http.StatusSeeOther,gin.H{
+		if context.BindJSON(&json) == nil {
+			msg_task_id :=json.Taskid
+			hhy :=json.Addt
+			machine :=json.Machine
+			for _, value := range hhy{
+				for k,v :=range value{
+					b,error := strconv.Atoi(v)
+					if error != nil{
+						fmt.Println("字符串转换成整数失败")
+					}
+					//k为收信人  b为状态
+					task_key := "dispatch:msgTask:" + msg_task_id
+					if b ==0{
+						c.Do("HINCRBY", task_key, "current_num", 1)
+					}
+					if b ==2 {
+						msg, _ := redis.StringMap(c.Do("HGETALL", task_key))
+						file_column,_ := msg["file_column"]
+						if len(file_column) >0{
+							address_key := "msg:app-enable-account:" +msg_task_id
+							_, err := redis.String(c.Do("SADD", address_key, k))
+							if err != nil {
+								log.Println("SADD failed:", err)
+								return
+							}
+						}else{
+							_, err = c.Do("rpush", "msg:txt:"+msg_task_id, k)
+							if err != nil {
+								fmt.Println("redis set failed:", err)
+							}
+						}
+					}
+					db, err := gorm.Open("mysql", Config.MSQ)
+					defer db.Close()
+					if err != nil {
+						panic("mysql db connect faild --- " + err.Error())
+					}
+					if len(k) >0{
+						addressees :=Models.Addressee{}
+						db.Where("number",k).First(&addressees).Scan(&addressees)
+						addressees.Num +=1
+						db.Save(&addressees)
+					}
+					ll := "msg:log:" + msg_task_id+":"+k+":"+v
+					c.Do("HSET", ll, "status", b)
+					c.Do("HSET", ll, "msg_task_id", msg_task_id)
+					c.Do("HSET", ll, "deviced_sn", json.Serial)
+					c.Do("HSET", ll, "account_email", json.Email)
+					c.Do("HSET", ll, "addressee", k)
+					c.Do("HSET", ll, "current_at", time.Now().Format("2006-01-02 15:04:05"))
+				}
+			}
+			deviceLiveExpire, _ := redis.Int(c.Do("HGET", "config:app_device_active_expire", "value"))
+			if deviceLiveExpire == 0 {
+				deviceLiveExpire = 10
+			}
+			//更新设备活跃记录
+			onlineDeviceLogKey := "app:online-device:" + machine + ":" + msg_task_id
+			c.Do("HSET", onlineDeviceLogKey, "device_name", machine)
+			c.Do("HSET", onlineDeviceLogKey, "task_id", msg_task_id)
+			c.Do("EXPIRE", onlineDeviceLogKey, deviceLiveExpire*60)
+			context.JSON(http.StatusOK,gin.H{
+				"code":200,
+				"message":"回执成功",
+			})
+
+		} else {
+			context.JSON(http.StatusSeeOther,gin.H{
 				"code":203,
-				"message":hhy,
+				"message":"no",
 			})
 			return
-			//if json.User == "TAO" && json.Password == "123" {
-			//	c.JSON(http.StatusOK, gin.H{"JSON=== status": "you are logged in"+json.User})
-			//} else {
-			//	c.JSON(http.StatusUnauthorized, gin.H{"JSON=== status": "unauthorized"})
-			//}
-		} else {
-			c.JSON(404, gin.H{"JSON=== status": "binding JSON error!"})
+			context.JSON(404, gin.H{"JSON=== status": "binding JSON error!"})
 		}
 
 
