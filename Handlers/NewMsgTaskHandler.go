@@ -99,7 +99,6 @@ import (
 			msgtaskid,_ := strconv.Atoi(msg["id"])
 			max_adress,_ := strconv.Atoi(msg["max_adress"])
 
-
 			if max_adress ==0{
 				max_adress,_= redis.Int(c.Do("HGET", "config:max_addressee", "value"))
 			}
@@ -374,6 +373,7 @@ import (
 			machine :=json.Machine
 			for _, value := range hhy{
 				for k,v :=range value{
+					//可能需要改为value['k']
 					b,error := strconv.Atoi(v)
 					if error != nil{
 						fmt.Println("字符串转换成整数失败")

@@ -31,6 +31,10 @@ func main(){
 	r.POST("/v1/msg_task/reply_newmsgtask",ReplyNewMsgTask)
 	r.POST("/v1/msg_task/get_json",GetJson)
 	r.POST("/v1/msg_task/upload_pic",UploadPic)
+	r.GET("/v1/msg_task/analysis_json",Analysis)
+	r.POST("/v1/msg_task/regexp",Regexp)
+	r.POST("/v1/msg_task/spider",Spider)
+
 	r.Run(":9009")
 }
 
