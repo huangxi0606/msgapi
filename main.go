@@ -34,6 +34,7 @@ func main(){
 	r.GET("/v1/msg_task/analysis_json",Analysis)
 	r.POST("/v1/msg_task/regexp",Regexp)
 	r.POST("/v1/msg_task/spider",Spider)
+	r.GET("/v1/msg_task/cron",Cron)
 
 	r.Run(":9009")
 }
