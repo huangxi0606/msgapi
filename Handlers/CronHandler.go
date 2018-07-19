@@ -6,7 +6,8 @@ import (
 	"log"
 	"github.com/gin-gonic/gin"
 )
-
+//https://studygolang.com/articles/10273
+//https://studygolang.com/articles/10967
 //1）星号(*)
 //表示 cron 表达式能匹配该字段的所有值。如在第5个字段使用星号(month)，表示每个月
 //
